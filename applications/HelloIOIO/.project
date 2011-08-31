@@ -36,5 +36,10 @@
 			<type>2</type>
 			<locationURI>_android_IOIOLib_a09f8619/src</locationURI>
 		</link>
+		<link>
+			<name>ioio_lib_src</name>
+			<type>2</type>
+			<locationURI>_android_ioio_lib_44a4f492/src</locationURI>
+		</link>
 	</linkedResources>
 </projectDescription>

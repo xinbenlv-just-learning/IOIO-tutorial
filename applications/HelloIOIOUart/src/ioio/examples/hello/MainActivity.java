@@ -110,7 +110,11 @@ public class MainActivity extends AbstractIOIOActivity {
 				} catch (IOException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
-					
+					Message msg1 =new Message();
+					msg1.what=0x102;
+					msg1.obj=e.getMessage();
+					MainActivity.mHandler.sendMessage(msg1);
+					reading =false;
 				}
 				reading=true;
 				led_.write(true);
@@ -133,20 +137,30 @@ public class MainActivity extends AbstractIOIOActivity {
 					msg1.obj=temp2;
 					MainActivity.mHandler.sendMessage(msg1);
 				}
-				reading=false;
-				led_.write(false);			
+		
 				}
 				catch (IOException e) {
 					// TODO Auto-generated catch block
-					e.printStackTrace();
 					
+					Message msg1 =new Message();
+					msg1.what=0x102;
+					msg1.obj=e.getMessage();
+					MainActivity.mHandler.sendMessage(msg1);
+					reading =false;
 				}
+				reading=false;
+				led_.write(false);	
 			}
 			
 			try {
 				sleep(300);
 			} 
 				catch (InterruptedException e) {
+					Message msg1 =new Message();
+					msg1.what=0x102;
+					msg1.obj=e.getMessage();
+					MainActivity.mHandler.sendMessage(msg1);
+					reading =false;
 			}
 		}
 	}
