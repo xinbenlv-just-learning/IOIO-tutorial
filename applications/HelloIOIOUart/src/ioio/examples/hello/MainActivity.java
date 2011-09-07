@@ -3,6 +3,7 @@ package ioio.examples.hello;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.LinkedList;
 
 import ioio.examples.hello.R;
 import ioio.lib.api.DigitalOutput;
@@ -27,6 +28,9 @@ public class MainActivity extends AbstractIOIOActivity {
 	private ToggleButton button_;
 	private TextView textview_;
 	public static Handler mHandler;
+	public static int DISPLAY_SIZE=30;
+	public LinkedList<String> tvbuf=new LinkedList<String>();
+	public Integer i=0;
 	/**
 	 * Called when the activity is first created. Here we normally initialize
 	 * our GUI.
@@ -40,15 +44,21 @@ public class MainActivity extends AbstractIOIOActivity {
         mHandler=new Handler(){
         	public void handleMessage(Message msg)
         	{
+        		i++;
         		String s="";
         		switch (msg.what){
         			case 0x101:
-        				s= "num:"+msg.obj.toString()+"\n";
+        				s= "num:"+msg.obj.toString();
         				break;
         			case 0x102:
-        				s= "received:"+msg.obj.toString()+"\n";
+        				s= "received:"+msg.obj.toString();
         		}
-				MainActivity.this.textview_.append(s);
+				tvbuf.addLast(i.toString()+"|"+s);
+				if(tvbuf.size()>DISPLAY_SIZE)tvbuf.removeFirst();
+				MainActivity.this.textview_.setText("");
+        		for (String str : tvbuf){
+    				MainActivity.this.textview_.append(str+"\n");
+        		}
 				
         		super.handleMessage(msg);
         	}
