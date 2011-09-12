@@ -1,5 +1,6 @@
 package ioio.examples.hello;
 
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -93,7 +94,7 @@ public class MainActivity extends AbstractIOIOActivity {
 		@Override
 		protected void setup() throws ConnectionLostException {
 			led_ = ioio_.openDigitalOutput(0, true);
-			uart = ioio_.openUart(37, 38, 38400, Uart.Parity.NONE,Uart.StopBits.ONE );
+			uart = ioio_.openUart(37, 38, 115200, Uart.Parity.NONE,Uart.StopBits.ONE );
 			in = uart.getInputStream();
 			out = uart.getOutputStream();
 			
@@ -110,8 +111,8 @@ public class MainActivity extends AbstractIOIOActivity {
 		 */
 		@Override
 		protected void loop() throws ConnectionLostException {
-			
-			if(reading==false)
+			boolean always_reading=false;//Always reading
+			if(reading==false && always_reading==false)
 			{
 				
 				try {
@@ -131,17 +132,21 @@ public class MainActivity extends AbstractIOIOActivity {
 			}
 			else{
 				try {
+				
 				int availableBytes =in.available(); 
+				if(always_reading ==true &&availableBytes==0){return;}
 				Message msg =new Message();
 				msg.what=0x101;
 				msg.obj=availableBytes;
 				MainActivity.mHandler.sendMessage(msg);
 				if(availableBytes>0){
-				byte[] rbuf=new byte[100];
-				
-					in.read(rbuf,0,availableBytes);
-					char[] temp = (new String(rbuf,0,availableBytes)).toCharArray();
-					String temp2=new String(temp);
+				int readBytes=Math.min(availableBytes, 41);
+					byte[] rbuf=new byte[readBytes];
+					
+					in.read(rbuf,0,readBytes);
+					//byte[] temp = (new String(rbuf,0,readBytes)).toCharArray();
+					String temp2= MainActivity.byte2HexString(rbuf);
+					
 					Message msg1 =new Message();
 					msg1.what=0x102;
 					msg1.obj=temp2;
@@ -184,4 +189,51 @@ public class MainActivity extends AbstractIOIOActivity {
 	protected AbstractIOIOActivity.IOIOThread createIOIOThread() {
 		return new IOIOThread();
 	}
+	
+    public static String byte2HexString(byte[] b) {
+        char[] hex = {'0', '1', '2', '3', '4', '5', '6', '7',
+                      '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
+        char[] newChar = new char[b.length * 3];
+        for(int i = 0; i < b.length; i++) {
+            newChar[3 * i] = hex[(b[i] & 0xf0) >> 4];
+            newChar[3 * i + 1] = hex[b[i] & 0xf];
+            newChar[3 * i + 2] = ' ';
+        }
+        return new String(newChar);
+    }
+    
+    public static int calcByte(int crc, int b) {
+        crc = crc ^ (int)b << 8;
+
+        for (int i = 0; i < 8; i++) {
+  	if ((crc & 0x8000) == 0x8000)
+  	  crc = crc << 1 ^ 0x1021;
+  	else
+  	  crc = crc << 1;
+        }
+
+        return crc & 0xffff;
+      }
+    public static int calc(byte[] packet, int index, int count) {
+    	int crc = 0;
+    	
+    	while (count > 0) {
+    	    crc = calcByte(crc, packet[index++]);
+    	    count--;
+    	}
+    	return crc;
+        }
+
+        public static int calc(byte[] packet, int count) {
+    	return calc(packet, 0, count);
+        }
+
+        public static void set(byte[] packet) {
+            int crc = calc(packet, packet.length - 2);
+
+            packet[packet.length - 2] = (byte) (crc & 0xFF);
+            packet[packet.length - 1] = (byte) ((crc >> 8) & 0xFF);
+        }
 }
+
+//7E 45 00 FF FF 00 00 1C 00 64 61 62 63 64 65 66 67 68 69 6A 6B 6C 6D 6E 6F 70 71 72 73 74 75 76 77 78 2C E9 7E
